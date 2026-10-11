@@ -1,34 +1,49 @@
-name: Build AI Bridge
+
+name: Build Warband AI Bridge
 
 on:
-  push:
-    branches: [ main ]
   workflow_dispatch:
+  push:
+    paths:
+      - "bridge_src/**"
+      - ".github/workflows/build.yml"
 
 jobs:
   build:
     runs-on: windows-latest
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
 
-    - name: Setup MSBuild
-      uses: microsoft/setup-msbuild@v2
+      - name: Preparar MSBuild
+        uses: microsoft/setup-msbuild@v2
 
-    - name: Setup NuGet
-      uses: nuget/setup-nuget@v2
+      - name: Buscar proyecto
+        id: project
+        shell: pwsh
+        run: |
+          $project = Get-ChildItem "bridge_src" -Filter "*.csproj" -File |
+            Select-Object -First 1
 
-    - name: Restore NuGet packages
-      run: nuget restore bridge_src/Ai_bridge_system-4.7.csproj
+          if (-not $project) {
+            throw "No se encontró ningún archivo .csproj en bridge_src"
+          }
 
-    - name: Build with MSBuild
-      run: msbuild bridge_src/Ai_bridge_system-4.7.csproj /p:Configuration=Release /p:Platform=AnyCPU /p:OutputPath=..\publish_output\
+          echo "path=$($project.FullName)" >> $env:GITHUB_OUTPUT
 
-    - name: List output files
-      run: dir publish_output
+      - name: Compilar IA Bridge
+        shell: pwsh
+        run: |
+          msbuild "${{ steps.project.outputs.path }}" `
+            /restore `
+            /m `
+            /p:Configuration=Release
 
-    - name: Upload compiled EXE
-      uses: actions/upload-artifact@v4
-      with:
-        name: Ai_bridge_system-4.7-Windows
-        path: publish_output/
+      - name: Publicar archivos compilados
+        uses: actions/upload-artifact@v4
+        with:
+          name: Warband-AI-Bridge-Windows
+          path: bridge_src/bin/Release/
+          if-no-files-found: error
+          retention-days: 14
