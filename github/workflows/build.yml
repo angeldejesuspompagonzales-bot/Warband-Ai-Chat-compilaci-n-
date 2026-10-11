@@ -12,16 +12,23 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: Setup .NET 6
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '6.0.x'
+    - name: Setup MSBuild
+      uses: microsoft/setup-msbuild@v2
 
-    - name: Publish executable
-      run: dotnet publish bridge_src/Ai_bridge_system-4.7.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish_output
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v2
+
+    - name: Restore NuGet packages
+      run: nuget restore bridge_src/Ai_bridge_system-4.7.csproj
+
+    - name: Build with MSBuild
+      run: msbuild bridge_src/Ai_bridge_system-4.7.csproj /p:Configuration=Release /p:Platform=AnyCPU /p:OutputPath=..\publish_output\
+
+    - name: List output files
+      run: dir publish_output
 
     - name: Upload compiled EXE
       uses: actions/upload-artifact@v4
       with:
         name: Ai_bridge_system-4.7-Windows
-        path: publish_output/Ai_bridge_system-4.7.exe
+        path: publish_output/
