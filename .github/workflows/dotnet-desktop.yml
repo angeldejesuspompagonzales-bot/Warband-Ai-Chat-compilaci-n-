@@ -18,10 +18,11 @@ jobs:
         dotnet-version: '6.0.x'
 
     - name: Publish executable
-      run: dotnet publish bridge_src/Ai_bridge_system-4.7.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish_output
+      run: dotnet publish Ai_bridge_system-4.7.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -o ./publish_output
+      working-directory: ./bridge_src
 
     - name: Upload compiled EXE
       uses: actions/upload-artifact@v4
       with:
         name: Ai_bridge_system-4.7-Windows
-        path: publish_output/Ai_bridge_system-4.7.exe
+        path: bridge_src/publish_output/Ai_bridge_system-4.7.exe
